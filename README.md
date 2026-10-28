@@ -15,3 +15,16 @@ Tabene er gennemsnittet af 12 indbetalinger fra maj 2024 til juli 2026, målt mo
 Fragten til Danmark fordeles på varerne efter vægt, hvis alle varer har en vægt, ellers efter pris. Moms ved levering (25 %) kan slås til for linjer, der ikke er toldfri.
 
 Det, du skriver, gemmes i browserens lokale lager.
+
+## Hent dine varer fra Basetao
+
+`basetao-fetcher.js` henter dine varer direkte fra din Basetao-konto, så du ikke skal taste dem ind.
+
+1. Log ind på www.basetao.com.
+2. Tryk F12 og vælg fanen **Console**.
+3. Indsæt hele indholdet af `basetao-fetcher.js` og tryk Enter. Første gang skal du måske skrive `allow pasting` i Chrome.
+4. Resultatet kopieres til udklipsholderen. Indsæt det i Haulberegneren under **Hent fra Basetao** og tryk **Indlæs**.
+
+Scriptet henter de varer, der endnu ikke er sendt. Har du ingen, henter det varerne og fragten fra din seneste afsendte pakke. Vil du have en bestemt pakke, så skriv dens waybill-ID i `BT_WAYBILL` øverst i scriptet.
+
+Scriptet læser kun fra din konto og sender intet andre steder hen.

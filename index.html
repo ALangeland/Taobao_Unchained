@@ -77,6 +77,17 @@ button{font:inherit;cursor:pointer;border-radius:6px}
 .rate{padding:12px 18px;background:var(--accent-soft);font-size:13px;color:var(--ink);display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
 .rate b{font-family:var(--f-mono)}
 .tag{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--stamp);color:var(--stamp);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.importbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.imp{background:var(--accent);color:var(--paper);border:1px solid var(--accent);padding:8px 14px;font-weight:600}
+.imp:hover{filter:brightness(1.08)}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);padding:8px 14px}
+.ghost:hover{border-color:var(--accent);color:var(--accent)}
+textarea{width:100%;min-height:96px;font:13px/1.4 var(--f-mono);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px 10px;resize:vertical}
+.msg{font-size:13px;margin:0}
+.msg.ok{color:var(--accent)}
+.msg.err{color:var(--stamp)}
+.steps{margin:0;padding-left:20px;font-size:14px;display:grid;gap:4px}
+.steps code{font-family:var(--f-mono);font-size:12px;background:var(--field);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
 .reset{background:none;border:none;color:var(--accent);padding:0;font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:3px}
 @media (prefers-reduced-motion:no-preference){.total{transition:color .2s}}
 
@@ -93,6 +104,23 @@ body{margin:0}
 
   <div class="grid">
     <div class="col">
+      <section>
+        <h2>Hent fra Basetao <small>valgfrit</small></h2>
+        <ol class="steps">
+          <li>Log ind på basetao.com og tryk <code>F12</code> → fanen Console.</li>
+          <li>Kopiér <a href="basetao-fetcher.js" target="_blank" rel="noopener">fetcher-scriptet</a>, indsæt det i konsollen og tryk Enter.</li>
+          <li>Indsæt resultatet her og tryk Indlæs.</li>
+        </ol>
+        <div class="importbar">
+          <button class="ghost" id="copyScript" type="button">Kopiér scriptet</button>
+        </div>
+        <textarea id="importBox" aria-label="Data fra Basetao-fetcheren" placeholder='{"source":"basetao", …}'></textarea>
+        <div class="importbar">
+          <button class="imp" id="doImport" type="button">Indlæs</button>
+          <p class="msg" id="importMsg" role="status"></p>
+        </div>
+      </section>
+
       <section>
         <h2>Varer <small id="exampleTag"><span class="tag">Eksempel</span></small></h2>
         <div class="items">
@@ -250,6 +278,34 @@ $("vat").checked = !!S.vat; $("vatFeeWrap").hidden = !S.vat;
 $("vat").onchange = e => { S.vat = e.target.checked; $("vatFeeWrap").hidden = !S.vat; touch(); calc() };
 $("addItem").onclick = () => { S.items.push({name:"",price:0,qty:1,w:0}); touch(); renderItems(); calc(); $("n"+(S.items.length-1)).focus() };
 $("resetAssump").onclick = () => { Object.assign(S, DEF); ["rate","pp","bt"].forEach(k=>$(k).value=S[k]); calc() };
+
+// ---- Import fra Basetao-fetcheren ----
+const SCRIPT_URL = "basetao-fetcher.js";
+function showMsg(t, ok){ const m = $("importMsg"); m.textContent = t; m.className = "msg " + (ok ? "ok" : "err") }
+function importData(raw){
+  let d;
+  try { d = JSON.parse(String(raw).trim()) } catch(e){ showMsg("Teksten er ikke data fra fetcher-scriptet. Kopiér hele linjen fra konsollen og prøv igen.", false); return }
+  if(!d || d.source !== "basetao" || !Array.isArray(d.items)){ showMsg("Data mangler varer. Kør fetcher-scriptet på basetao.com igen.", false); return }
+  if(!d.items.length){ showMsg("Scriptet fandt ingen varer. Har du varer på lageret eller en afsendt pakke?", false); return }
+  S.items = d.items.map(i => ({ name: String(i.name || "").slice(0,110), price: num(i.price), qty: Math.max(1, num(i.qty) || 1), w: num(i.w) }));
+  S.domestic = num(d.domestic);
+  if(num(d.intl) > 0) S.intl = num(d.intl);
+  S.example = false; $("exampleTag").hidden = true;
+  renderItems(); ["domestic","intl"].forEach(k => $(k).value = S[k]); calc();
+  const r = (d.recharges || [])[0];
+  showMsg(`Indlæst ${d.items.length} varer` + (d.kind === "waybill" ? ` fra pakke ${d.waybill}` : " der ikke er sendt endnu") +
+    (num(d.intl) > 0 ? `, inkl. fragt til Danmark ¥${d.intl}` : ". Skriv fragten til Danmark, når du kender den") +
+    (r ? `. Basetaos seneste kurs: ¥${r.cnyPerUsd} pr. $.` : "."), true);
+}
+$("doImport").onclick = () => importData($("importBox").value);
+$("importBox").addEventListener("paste", e => { const t = (e.clipboardData || window.clipboardData)?.getData("text"); if(t && t.trim().startsWith("{")){ e.preventDefault(); $("importBox").value = t; importData(t) } });
+$("copyScript").onclick = async () => {
+  try {
+    const src = await (await fetch(SCRIPT_URL)).text();
+    await navigator.clipboard.writeText(src);
+    showMsg("Scriptet er kopieret. Indsæt det i konsollen på basetao.com.", true);
+  } catch(e){ showMsg("Kunne ikke kopiere automatisk. Åbn linket til fetcher-scriptet og kopiér teksten derfra.", false) }
+};
 calc();
 </script>
 </body>
