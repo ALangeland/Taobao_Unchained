@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Haulberegner</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one working column — varer → fragt → antagelser, with a sticky "fragtseddel" receipt beside it on wide screens, below on phones */
+:root{
+  --bg:#eef1f0; --paper:#ffffff; --ink:#16231f; --muted:#5b6b66; --line:#cfd8d5;
+  --accent:#0f6b5c; --accent-soft:#dcefe9; --stamp:#b5462c; --field:#f7f9f8;
+  --f-display:"Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101715; --paper:#17211e; --ink:#e4ece9; --muted:#93a59f; --line:#2b3a35;
+  --accent:#4fc4ad; --accent-soft:#1d3a33; --stamp:#e6896f; --field:#111a17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101715; --paper:#17211e; --ink:#e4ece9; --muted:#93a59f; --line:#2b3a35;
+  --accent:#4fc4ad; --accent-soft:#1d3a33; --stamp:#e6896f; --field:#111a17; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:24px}
+header h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,5vw,40px);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:12px;min-width:0}
+h2{font-family:var(--f-display);font-weight:700;font-size:17px;margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+h2 small{font-family:var(--f-body);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.col{display:grid;gap:24px;min-width:0}
+label{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;font-weight:500}
+input[type=text],input[type=number]{width:100%;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
+input[type=number]{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.items{display:grid;gap:8px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 96px 64px 84px 34px;gap:8px;align-items:center}
+.row.head{font-size:11px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.row.head span:not(:first-child){text-align:right}
+@media (max-width:520px){
+  .row{grid-template-columns:minmax(0,1fr) 84px 34px;grid-template-areas:"n n x" "p q w"}
+  .row .n{grid-area:n}.row .p{grid-area:p}.row .q{grid-area:q}.row .w{grid-area:w}.row .x{grid-area:x}
+  .row.head{display:none}
+  .row{padding-bottom:10px;border-bottom:1px dashed var(--line)}
+}
+button{font:inherit;cursor:pointer;border-radius:6px}
+.del{background:none;border:1px solid var(--line);color:var(--muted);width:34px;height:36px;font-size:18px;line-height:1}
+.del:hover{color:var(--stamp);border-color:var(--stamp)}
+.add{justify-self:start;background:var(--accent-soft);color:var(--accent);border:1px solid transparent;padding:8px 14px;font-weight:600}
+.add:hover{border-color:var(--accent)}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.f{display:grid;gap:4px;min-width:0}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px}
+.check input{margin-top:4px;accent-color:var(--accent)}
+/* receipt */
+.receipt{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+@media (max-width:860px){.receipt{position:static}}
+.receipt .top{padding:18px;border-bottom:2px dashed var(--line);display:grid;gap:2px}
+.receipt .top label{color:var(--muted)}
+.total{font-family:var(--f-display);font-weight:700;font-size:44px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.total span{font-size:20px;font-weight:500;color:var(--muted);margin-left:4px}
+.sub{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.lines{padding:14px 18px;display:grid;gap:6px;font-variant-numeric:tabular-nums}
+.ln{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.ln b{font-family:var(--f-mono);font-weight:400}
+.ln.loss b{color:var(--stamp)}
+.ln.sum{border-top:1px solid var(--line);padding-top:8px;margin-top:4px;font-weight:600}
+.ln.sum b{font-weight:600}
+.per{padding:14px 18px;border-top:1px solid var(--line);display:grid;gap:6px}
+.per h3{margin:0 0 2px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.per .ln span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rate{padding:12px 18px;background:var(--accent-soft);font-size:13px;color:var(--ink);display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
+.rate b{font-family:var(--f-mono)}
+.tag{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--stamp);color:var(--stamp);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.reset{background:none;border:none;color:var(--accent);padding:0;font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+@media (prefers-reduced-motion:no-preference){.total{transition:color .2s}}
+
+[hidden]{display:none!important}
+body{margin:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Haulberegner</h1>
+    <p>Skriv dine Taobao-varer og fragten i yuan. Prisen i kroner regner med det, du reelt mister hos PayPal og Basetao, ud fra dit eget regnskab.</p>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <section>
+        <h2>Varer <small id="exampleTag"><span class="tag">Eksempel</span></small></h2>
+        <div class="items">
+          <div class="row head"><span>Vare</span><span>Pris ¥</span><span>Antal</span><span>Vægt g</span><span></span></div>
+          <div id="items" class="items"></div>
+        </div>
+        <button class="add" id="addItem" type="button">+ Tilføj vare</button>
+        <p class="hint">Vægten er valgfri. Står den på alle varer, fordeles fragten efter vægt, ellers efter pris.</p>
+      </section>
+
+      <section>
+        <h2>Fragt og gebyrer <small>i yuan</small></h2>
+        <div class="fields">
+          <div class="f"><label for="domestic">Fragt i Kina</label><input type="number" id="domestic" min="0" step="0.01" inputmode="decimal"></div>
+          <div class="f"><label for="intl">Fragt til Danmark</label><input type="number" id="intl" min="0" step="0.01" inputmode="decimal"></div>
+          <div class="f"><label for="extra">Andre gebyrer</label><input type="number" id="extra" min="0" step="0.01" inputmode="decimal"></div>
+        </div>
+        <p class="hint">Fragt til Danmark: brug prisen fra Basetaos fragtberegner, fx ca. ¥383 for 3 kg eller ¥671 for 7 kg med toldfri DHL/DPD.</p>
+      </section>
+
+      <section>
+        <h2>Antagelser <button class="reset" id="resetAssump" type="button">Nulstil</button></h2>
+        <div class="fields">
+          <div class="f"><label for="rate">Kr. pr. 100 ¥ (marked)</label><input type="number" id="rate" min="1" step="0.01" inputmode="decimal"></div>
+          <div class="f"><label for="pp">PayPal-tab %</label><input type="number" id="pp" min="0" max="50" step="0.01" inputmode="decimal"></div>
+          <div class="f"><label for="bt">Basetao-tab %</label><input type="number" id="bt" min="0" max="50" step="0.01" inputmode="decimal"></div>
+        </div>
+        <p class="hint">Markedskursen er ECB-kursen fra 23/10-2026. Tabene er dit gennemsnit over 12 indbetalinger fra maj 2024 til juli 2026. Betaler du med Wise i stedet for PayPal, så sæt PayPal-tabet til Wise's gebyr.</p>
+        <label class="check"><input type="checkbox" id="vat"><span>Moms ved levering (25 % af varer og fragt). Slå kun til, hvis du ikke bruger en toldfri linje.</span></label>
+        <div class="fields" id="vatFeeWrap" hidden>
+          <div class="f"><label for="vatfee">Ekspeditionsgebyr kr</label><input type="number" id="vatfee" min="0" step="1" inputmode="decimal"></div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="receipt" aria-live="polite">
+      <div class="top">
+        <label>Du betaler reelt</label>
+        <div class="total" id="total">0<span>kr</span></div>
+        <div class="sub" id="subCny">¥0 i alt</div>
+      </div>
+      <div class="lines" id="lines"></div>
+      <div class="rate"><span>100 ¥ koster dig</span><b id="per100">–</b></div>
+      <div class="per" id="perWrap"><h3>Pris pr. vare inkl. fragt</h3><div id="per" class="lines" style="padding:0"></div></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const DEF = {rate:100.12, pp:4.37, bt:7.32};
+const EXAMPLE = {
+  items:[
+    {name:"Solbriller", price:198, qty:1, w:320},
+    {name:"Sko 9060", price:250, qty:1, w:840},
+    {name:"Hjemmesko", price:200, qty:1, w:760}
+  ],
+  domestic:10, intl:338, extra:0, rate:DEF.rate, pp:DEF.pp, bt:DEF.bt, vat:false, vatfee:0, example:true
+};
+const KEY = "haulberegner-v1";
+let S;
+try{ S = JSON.parse(localStorage.getItem(KEY)) || null }catch(e){ S = null }
+if(!S) S = structuredClone(EXAMPLE);
+
+const $ = id => document.getElementById(id);
+const num = v => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : 0 };
+const kr = n => n.toLocaleString("da-DK",{minimumFractionDigits:2, maximumFractionDigits:2});
+const kr0 = n => n.toLocaleString("da-DK",{maximumFractionDigits:0});
+const yuan = n => "¥" + n.toLocaleString("da-DK",{minimumFractionDigits:0, maximumFractionDigits:2});
+
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)) }catch(e){} }
+function touch(){ if(S.example){ S.example=false; $("exampleTag").hidden = true } }
+
+function renderItems(){
+  const box = $("items"); box.innerHTML = "";
+  S.items.forEach((it,i)=>{
+    const r = document.createElement("div"); r.className = "row";
+    r.innerHTML = `
+      <input class="n" type="text" id="n${i}" aria-label="Vare" placeholder="Hvad er det?">
+      <input class="p" type="number" id="p${i}" aria-label="Pris i yuan" min="0" step="0.01" inputmode="decimal" placeholder="Pris ¥">
+      <input class="q" type="number" id="q${i}" aria-label="Antal" min="1" step="1" inputmode="numeric">
+      <input class="w" type="number" id="w${i}" aria-label="Vægt i gram" min="0" step="1" inputmode="numeric" placeholder="g">
+      <button class="del x" type="button" aria-label="Fjern vare">×</button>`;
+    const [n,p,q,w] = r.querySelectorAll("input");
+    n.value = it.name; p.value = it.price || ""; q.value = it.qty || 1; w.value = it.w || "";
+    n.oninput = e => { it.name = e.target.value; touch(); calc() };
+    p.oninput = e => { it.price = num(e.target.value); touch(); calc() };
+    q.oninput = e => { it.qty = Math.max(1, num(e.target.value)||1); touch(); calc() };
+    w.oninput = e => { it.w = num(e.target.value); touch(); calc() };
+    r.querySelector("button").onclick = () => { S.items.splice(i,1); if(!S.items.length) S.items.push({name:"",price:0,qty:1,w:0}); touch(); renderItems(); calc() };
+    box.appendChild(r);
+  });
+}
+
+function bindField(id, key){
+  const el = $(id); el.value = S[key];
+  el.oninput = () => { S[key] = num(el.value); touch(); calc() };
+}
+
+function calc(){
+  const goods = S.items.reduce((a,it)=>a + num(it.price)*(num(it.qty)||1), 0);
+  const ship = num(S.domestic) + num(S.intl);
+  const extra = num(S.extra);
+  const cny = goods + ship + extra;
+  const perKr = num(S.rate)/100;                 // markedskurs kr pr. ¥
+  const lossFrac = (num(S.pp)+num(S.bt))/100;    // tab i % af det du betaler
+  const factor = 1/(1 - Math.min(lossFrac, .9)); // kr betalt pr. kr markedsværdi
+  const market = cny*perKr;
+  const paid = market*factor;
+  const ppLoss = paid*num(S.pp)/100, btLoss = paid*num(S.bt)/100;
+  let vat = 0, vatfee = 0;
+  if(S.vat){ vat = (goods + ship)*perKr*0.25; vatfee = num(S.vatfee) }
+  const total = paid + vat + vatfee;
+
+  $("total").innerHTML = kr0(total) + "<span>kr</span>";
+  $("subCny").textContent = yuan(cny) + " i alt · " + kr(total) + " kr";
+  const L = [
+    ["Varer", goods*perKr*factor],
+    ["Fragt", ship*perKr*factor],
+  ];
+  if(extra) L.push(["Andre gebyrer", extra*perKr*factor]);
+  let html = L.map(([a,b])=>`<div class="ln"><span>${a}</span><b>${kr(b)}</b></div>`).join("");
+  html += `<div class="ln loss"><span>heraf PayPal</span><b>${kr(ppLoss)}</b></div>`;
+  html += `<div class="ln loss"><span>heraf Basetao</span><b>${kr(btLoss)}</b></div>`;
+  if(S.vat){
+    html += `<div class="ln"><span>Moms 25 %</span><b>${kr(vat)}</b></div>`;
+    if(vatfee) html += `<div class="ln"><span>Ekspeditionsgebyr</span><b>${kr(vatfee)}</b></div>`;
+  }
+  html += `<div class="ln sum"><span>I alt</span><b>${kr(total)} kr</b></div>`;
+  $("lines").innerHTML = html;
+  $("per100").textContent = kr(100*perKr*factor) + " kr";
+
+  // pris pr. vare med fordelt fragt
+  const valid = S.items.filter(it=>num(it.price)>0);
+  const byWeight = valid.length && valid.every(it=>num(it.w)>0);
+  const base = byWeight ? valid.reduce((a,it)=>a+num(it.w)*(num(it.qty)||1),0) : goods;
+  const shared = ship + extra;
+  $("perWrap").hidden = !valid.length;
+  $("per").innerHTML = valid.map(it=>{
+    const q = num(it.qty)||1;
+    const share = base ? (byWeight ? num(it.w)*q : num(it.price)*q)/base : 0;
+    const itemCny = num(it.price)*q + shared*share;
+    let itemKr = itemCny*perKr*factor;
+    if(S.vat) itemKr += (num(it.price)*q + ship*share)*perKr*0.25 + vatfee*share;
+    const label = (it.name || "Vare") + (q>1 ? ` ×${q}` : "");
+    return `<div class="ln"><span title="${label.replace(/"/g,'&quot;')}">${label.replace(/</g,'&lt;')}</span><b>${kr(itemKr)}</b></div>`;
+  }).join("") + `<p class="hint" style="margin-top:4px">Fragten er fordelt efter ${byWeight ? "vægt" : "pris"}.</p>`;
+  save();
+}
+
+$("exampleTag").hidden = !S.example;
+renderItems();
+bindField("domestic","domestic"); bindField("intl","intl"); bindField("extra","extra");
+bindField("rate","rate"); bindField("pp","pp"); bindField("bt","bt"); bindField("vatfee","vatfee");
+$("vat").checked = !!S.vat; $("vatFeeWrap").hidden = !S.vat;
+$("vat").onchange = e => { S.vat = e.target.checked; $("vatFeeWrap").hidden = !S.vat; touch(); calc() };
+$("addItem").onclick = () => { S.items.push({name:"",price:0,qty:1,w:0}); touch(); renderItems(); calc(); $("n"+(S.items.length-1)).focus() };
+$("resetAssump").onclick = () => { Object.assign(S, DEF); ["rate","pp","bt"].forEach(k=>$(k).value=S[k]); calc() };
+calc();
+</script>
+</body>
+</html>
