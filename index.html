@@ -274,7 +274,7 @@ let S = null;
 try { S = JSON.parse(localStorage.getItem(KEY)) } catch(e) {}
 if (!S) {
   S = structuredClone(EXAMPLE);
-  try { const old = JSON.parse(localStorage.getItem("haulberegner-v1")); if (old && old.items) Object.assign(S, { items:old.items, domestic:old.domestic, intl:old.intl, extra:old.extra, vat:old.vat, vatfee:old.vatfee, example:!!old.example, intlMode:"manual" }); } catch(e) {}
+  try { const old = JSON.parse(localStorage.getItem("haulberegner-v1")); if (old && old.items && !old.example) Object.assign(S, { items:old.items, domestic:old.domestic, intl:old.intl, extra:old.extra, vat:old.vat, vatfee:old.vatfee, example:!!old.example, intlMode:"manual" }); } catch(e) {}
 }
 for (const k of Object.keys(EXAMPLE)) if (S[k] === undefined) S[k] = structuredClone(EXAMPLE[k]);
 
