@@ -14,6 +14,7 @@
   - Findes der ingen, henter det i stedet varerne fra din seneste afsendte pakke
     sammen med den fragt, du betalte for den.
   - Dine seneste PayPal-indbetalinger, så du kan se Basetaos kurs pr. dollar.
+  - Basetaos aktuelle fragttakster til Danmark, så beregneren kan estimere fragten.
 
   Scriptet læser kun. Det ændrer intet på din konto og sender intet andre steder hen.
 
@@ -99,9 +100,29 @@
       return { date: new Date(r.addtime * 1000).toISOString().slice(0, 10), usd, cny, cnyPerUsd: Math.round(cny / usd * 10000) / 10000 };
     });
 
+  // Basetaos aktuelle fragttakster til Danmark (landekode 52). Bruger sidens egen beregner-funktion.
+  let tariffs = null;
+  try {
+    if (typeof ajax_content === "function" && typeof t_name !== "undefined" && typeof $ === "function") {
+      const d = await new Promise((res, rej) =>
+        $.when(ajax_content(t_name, t_hash, "post", BASE.replace(/^\//, location.origin + "/") + "/other_action/cost_freight",
+          { amount: "100", weight: "3000", country: "52" })).done(res).fail(() => rej(new Error("fragtberegneren svarede ikke"))));
+      const lines = (d && d.data || []).map(r => ({
+        n: clean(r.deliveryname),
+        fw: Number(r.first_weight), ff: Number(r.first_fee),
+        cw: Number(r.continue_weight), cf: Number(r.continue_fee),
+        cust: Number(r.customs_fee) || 0,
+        max: Number(r.queryurl) || 15000,
+        days: (String(r.notice).match(/(\d+-\d+)\s*(?:working )?days/) || [])[1] || "",
+        vol: Number((String(r.notice).match(/cm\s*\/\s*(\d{4})/) || [])[1]) || 0
+      })).filter(l => l.n && l.ff > 0 && l.cw > 0);
+      if (lines.length) tariffs = { date: new Date().toISOString().slice(0, 10), lines };
+    }
+  } catch (e) { console.warn("Kunne ikke hente fragttakster: " + e.message + ". Beregneren bruger sine gemte takster."); }
+
   const result = {
     source: "basetao",
-    version: 1,
+    version: 2,
     fetched: new Date().toISOString(),
     kind: source,
     waybill,
@@ -109,7 +130,8 @@
     domestic,
     intl,
     balance: records[0] ? Number(records[0].accountmoney) : null,
-    recharges
+    recharges,
+    tariffs
   };
 
   const text = JSON.stringify(result);
@@ -120,7 +142,8 @@
   console.log(
     `%cHaulberegner: ${items.length} varer (${source === "waybill" ? "pakke " + waybill : "ikke afsendt"}), ` +
     `fragt i Kina ¥${domestic}` + (intl ? `, fragt til DK ¥${intl}` : "") +
-    (recharges[0] ? `, seneste kurs ¥${recharges[0].cnyPerUsd} pr. $` : ""),
+    (recharges[0] ? `, seneste kurs ¥${recharges[0].cnyPerUsd} pr. $` : "") +
+    (tariffs ? `, ${tariffs.lines.length} fragtlinjer` : ""),
     "font-weight:bold;color:#0f6b5c"
   );
   console.table(result.items.map(i => ({ vare: i.name, "pris ¥": i.price, antal: i.qty, "vægt g": i.w })));

@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Haulberegner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: one working column — varer → fragt → antagelser, with a sticky "fragtseddel" receipt beside it on wide screens, below on phones */
+/* Layout: one working column (hent → varer → fragt → indbetalinger → antagelser) with a sticky receipt beside it on wide screens, below on phones */
 :root{
   --bg:#eef1f0; --paper:#ffffff; --ink:#16231f; --muted:#5b6b66; --line:#cfd8d5;
   --accent:#0f6b5c; --accent-soft:#dcefe9; --stamp:#b5462c; --field:#f7f9f8;
@@ -22,100 +23,123 @@
   --bg:#101715; --paper:#17211e; --ink:#e4ece9; --muted:#93a59f; --line:#2b3a35;
   --accent:#4fc4ad; --accent-soft:#1d3a33; --stamp:#e6896f; --field:#111a17; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
-.wrap{max-width:1080px;margin:0 auto;display:grid;gap:24px}
+a{color:var(--accent)}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:24px}
 header h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,5vw,40px);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
-header p{margin:6px 0 0;color:var(--muted);max-width:62ch}
-.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
-@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
-section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:12px;min-width:0}
-h2{font-family:var(--f-display);font-weight:700;font-size:17px;margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-h2 small{font-family:var(--f-body);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+header p{margin:6px 0 0;color:var(--muted);max-width:64ch}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:24px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
 .col{display:grid;gap:24px;min-width:0}
-label{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;font-weight:500}
-input[type=text],input[type=number]{width:100%;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:12px;min-width:0}
+h2{font-family:var(--f-display);font-weight:700;font-size:17px;margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+h2 small{font-family:var(--f-body);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+label,.lbl{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;font-weight:500}
+input[type=text],input[type=number],input[type=date],select{width:100%;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
 input[type=number]{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
-input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input:disabled{opacity:.6}
+input:focus-visible,button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:inherit;cursor:pointer;border-radius:6px}
 .items{display:grid;gap:8px}
 .row{display:grid;grid-template-columns:minmax(0,1fr) 96px 64px 84px 34px;gap:8px;align-items:center}
 .row.head{font-size:11px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
 .row.head span:not(:first-child){text-align:right}
-@media (max-width:520px){
+@media (max-width:540px){
   .row{grid-template-columns:minmax(0,1fr) 84px 34px;grid-template-areas:"n n x" "p q w"}
   .row .n{grid-area:n}.row .p{grid-area:p}.row .q{grid-area:q}.row .w{grid-area:w}.row .x{grid-area:x}
   .row.head{display:none}
   .row{padding-bottom:10px;border-bottom:1px dashed var(--line)}
 }
-button{font:inherit;cursor:pointer;border-radius:6px}
 .del{background:none;border:1px solid var(--line);color:var(--muted);width:34px;height:36px;font-size:18px;line-height:1}
 .del:hover{color:var(--stamp);border-color:var(--stamp)}
 .add{justify-self:start;background:var(--accent-soft);color:var(--accent);border:1px solid transparent;padding:8px 14px;font-weight:600}
 .add:hover{border-color:var(--accent)}
+.imp{background:var(--accent);color:var(--paper);border:1px solid var(--accent);padding:8px 14px;font-weight:600}
+.imp:hover{filter:brightness(1.08)}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);padding:8px 14px}
+.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .f{display:grid;gap:4px;min-width:0}
 .hint{font-size:13px;color:var(--muted);margin:0}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:14px}
 .check input{margin-top:4px;accent-color:var(--accent)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:var(--field);color:var(--muted);padding:7px 12px;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper);font-weight:600}
+textarea{width:100%;min-height:90px;font:13px/1.4 var(--f-mono);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px 10px;resize:vertical}
+.msg{font-size:13px;margin:0}
+.msg.ok{color:var(--accent)} .msg.err{color:var(--stamp)}
+.steps{margin:0;padding-left:20px;font-size:14px;display:grid;gap:4px}
+code{font-family:var(--f-mono);font-size:12px;background:var(--field);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+.tag{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--stamp);color:var(--stamp);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.reset{background:none;border:none;color:var(--accent);padding:0;font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+/* fragtlinjer */
+.lines-list{display:grid;gap:6px}
+.opt{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer}
+.opt input{accent-color:var(--accent);margin:0}
+.opt .nm{min-width:0;font-size:14px}
+.opt .nm small{display:block;color:var(--muted);font-size:12px}
+.opt b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt.off{opacity:.45;cursor:not-allowed}
+.cheap{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 5px;margin-left:6px}
+/* log */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--field);position:sticky;top:0}
+th:first-child,td:first-child{text-align:left}
+td input{padding:4px 6px;font-size:13px;width:100%;min-width:70px}
+td input[type=date]{min-width:130px}
+td.out{font-family:var(--f-mono)}
+td.bad{color:var(--stamp)}
+td.est{color:var(--muted);font-style:italic}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:2px}
+.stat b{font-family:var(--f-display);font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
 /* receipt */
 .receipt{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-@media (max-width:860px){.receipt{position:static}}
+@media (max-width:880px){.receipt{position:static}}
 .receipt .top{padding:18px;border-bottom:2px dashed var(--line);display:grid;gap:2px}
-.receipt .top label{color:var(--muted)}
 .total{font-family:var(--f-display);font-weight:700;font-size:44px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .total span{font-size:20px;font-weight:500;color:var(--muted);margin-left:4px}
 .sub{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
-.lines{padding:14px 18px;display:grid;gap:6px;font-variant-numeric:tabular-nums}
+.rlines{padding:14px 18px;display:grid;gap:6px;font-variant-numeric:tabular-nums}
 .ln{display:flex;justify-content:space-between;gap:12px;font-size:14px}
-.ln b{font-family:var(--f-mono);font-weight:400}
+.ln span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ln b{font-family:var(--f-mono);font-weight:400;flex:none}
 .ln.loss b{color:var(--stamp)}
 .ln.sum{border-top:1px solid var(--line);padding-top:8px;margin-top:4px;font-weight:600}
 .ln.sum b{font-weight:600}
 .per{padding:14px 18px;border-top:1px solid var(--line);display:grid;gap:6px}
 .per h3{margin:0 0 2px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
-.per .ln span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rate{padding:12px 18px;background:var(--accent-soft);font-size:13px;color:var(--ink);display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
+.rate{padding:12px 18px;background:var(--accent-soft);font-size:13px;display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
 .rate b{font-family:var(--f-mono)}
-.tag{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--stamp);color:var(--stamp);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
-.importbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.imp{background:var(--accent);color:var(--paper);border:1px solid var(--accent);padding:8px 14px;font-weight:600}
-.imp:hover{filter:brightness(1.08)}
-.ghost{background:none;border:1px solid var(--line);color:var(--ink);padding:8px 14px}
-.ghost:hover{border-color:var(--accent);color:var(--accent)}
-textarea{width:100%;min-height:96px;font:13px/1.4 var(--f-mono);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px 10px;resize:vertical}
-.msg{font-size:13px;margin:0}
-.msg.ok{color:var(--accent)}
-.msg.err{color:var(--stamp)}
-.steps{margin:0;padding-left:20px;font-size:14px;display:grid;gap:4px}
-.steps code{font-family:var(--f-mono);font-size:12px;background:var(--field);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
-.reset{background:none;border:none;color:var(--accent);padding:0;font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:3px}
-@media (prefers-reduced-motion:no-preference){.total{transition:color .2s}}
-
-[hidden]{display:none!important}
-body{margin:0}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>Haulberegner</h1>
-    <p>Skriv dine Taobao-varer og fragten i yuan. Prisen i kroner regner med det, du reelt mister hos PayPal og Basetao, ud fra dit eget regnskab.</p>
+    <p>Skriv dine Taobao-varer i yuan, eller hent dem fra Basetao. Beregneren estimerer fragten ud fra vægten og regner prisen om til kroner med de tab, dine egne indbetalinger viser.</p>
   </header>
 
   <div class="grid">
     <div class="col">
+
       <section>
         <h2>Hent fra Basetao <small>valgfrit</small></h2>
         <ol class="steps">
           <li>Log ind på basetao.com og tryk <code>F12</code> → fanen Console.</li>
           <li>Kopiér <a href="basetao-fetcher.js" target="_blank" rel="noopener">fetcher-scriptet</a>, indsæt det i konsollen og tryk Enter.</li>
-          <li>Indsæt resultatet her og tryk Indlæs.</li>
+          <li>Indsæt resultatet her og tryk Indlæs. Varer, fragttakster og indbetalinger bliver hentet.</li>
         </ol>
-        <div class="importbar">
-          <button class="ghost" id="copyScript" type="button">Kopiér scriptet</button>
-        </div>
+        <div class="bar"><button class="ghost" id="copyScript" type="button">Kopiér scriptet</button></div>
         <textarea id="importBox" aria-label="Data fra Basetao-fetcheren" placeholder='{"source":"basetao", …}'></textarea>
-        <div class="importbar">
+        <div class="bar">
           <button class="imp" id="doImport" type="button">Indlæs</button>
           <p class="msg" id="importMsg" role="status"></p>
         </div>
@@ -128,17 +152,50 @@ body{margin:0}
           <div id="items" class="items"></div>
         </div>
         <button class="add" id="addItem" type="button">+ Tilføj vare</button>
-        <p class="hint">Vægten er valgfri. Står den på alle varer, fordeles fragten efter vægt, ellers efter pris.</p>
+        <p class="hint">Vægten bruges til at estimere fragten og til at fordele den på varerne. Vægten fra Basetao er pr. ordre, ikke pr. stk.</p>
       </section>
 
       <section>
-        <h2>Fragt og gebyrer <small>i yuan</small></h2>
-        <div class="fields">
-          <div class="f"><label for="domestic">Fragt i Kina</label><input type="number" id="domestic" min="0" step="0.01" inputmode="decimal"></div>
-          <div class="f"><label for="intl">Fragt til Danmark</label><input type="number" id="intl" min="0" step="0.01" inputmode="decimal"></div>
-          <div class="f"><label for="extra">Andre gebyrer</label><input type="number" id="extra" min="0" step="0.01" inputmode="decimal"></div>
+        <h2>Fragt <small id="weightLabel">0 g</small></h2>
+        <div class="bar">
+          <span class="lbl">Fragt til Danmark</span>
+          <div class="seg" role="group" aria-label="Fragt til Danmark">
+            <button type="button" id="modeAuto" aria-pressed="true">Estimér ud fra vægt</button>
+            <button type="button" id="modeManual" aria-pressed="false">Skriv selv</button>
+          </div>
         </div>
-        <p class="hint">Fragt til Danmark: brug prisen fra Basetaos fragtberegner, fx ca. ¥383 for 3 kg eller ¥671 for 7 kg med toldfri DHL/DPD.</p>
+        <div id="autoBox" class="lines-list"></div>
+        <div id="manualBox" class="fields" hidden>
+          <div class="f"><label for="intl">Fragt til Danmark ¥</label><input type="number" id="intl" min="0" step="0.01" inputmode="decimal"></div>
+        </div>
+        <div class="fields">
+          <div class="f"><label for="pack">Ekstra emballage g</label><input type="number" id="pack" min="0" step="10" inputmode="numeric"></div>
+          <div class="f"><label for="domestic">Fragt i Kina ¥</label><input type="number" id="domestic" min="0" step="0.01" inputmode="decimal"></div>
+          <div class="f"><label for="extra">Andre gebyrer ¥</label><input type="number" id="extra" min="0" step="0.01" inputmode="decimal"></div>
+        </div>
+        <p class="hint" id="tariffNote"></p>
+      </section>
+
+      <section>
+        <h2>Indbetalinger <small>dit tab, beregnet</small></h2>
+        <p class="hint">Skriv hvad der blev trukket på din konto, hvor mange dollars du sendte, og hvor mange yuan Basetao gav dig. Mangler yuan, estimeres de ud fra dit gennemsnit. Markedskursen kan hentes automatisk.</p>
+        <div class="stats" id="stats"></div>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Dato</th><th>Trukket kr</th><th>Sendt $</th><th>Fik ¥</th><th>Marked kr/$</th><th>Marked ¥/$</th><th>PayPal</th><th>Basetao</th><th>Kr pr. 100 ¥</th><th></th></tr></thead>
+            <tbody id="logBody"></tbody>
+          </table>
+        </div>
+        <div class="bar">
+          <button class="add" id="addLog" type="button">+ Tilføj indbetaling</button>
+          <button class="ghost" id="fetchRates" type="button">Hent markedskurser</button>
+          <p class="msg" id="logMsg" role="status"></p>
+        </div>
+        <label class="check"><input type="checkbox" id="useLog"><span>Brug gennemsnittet af mine indbetalinger i beregningen</span></label>
+        <div class="fields">
+          <div class="f"><label for="logN">Gennemsnit over</label>
+            <select id="logN"><option value="0">Alle indbetalinger</option><option value="3">Seneste 3</option><option value="5">Seneste 5</option><option value="10">Seneste 10</option></select></div>
+        </div>
       </section>
 
       <section>
@@ -148,7 +205,8 @@ body{margin:0}
           <div class="f"><label for="pp">PayPal-tab %</label><input type="number" id="pp" min="0" max="50" step="0.01" inputmode="decimal"></div>
           <div class="f"><label for="bt">Basetao-tab %</label><input type="number" id="bt" min="0" max="50" step="0.01" inputmode="decimal"></div>
         </div>
-        <p class="hint">Markedskursen er ECB-kursen fra 23/10-2026. Tabene er dit gennemsnit over 12 indbetalinger fra maj 2024 til juli 2026. Betaler du med Wise i stedet for PayPal, så sæt PayPal-tabet til Wise's gebyr.</p>
+        <div class="bar"><button class="ghost" id="fetchToday" type="button">Hent dagens kurs</button><p class="msg" id="rateMsg" role="status"></p></div>
+        <p class="hint" id="assumpNote"></p>
         <label class="check"><input type="checkbox" id="vat"><span>Moms ved levering (25 % af varer og fragt). Slå kun til, hvis du ikke bruger en toldfri linje.</span></label>
         <div class="fields" id="vatFeeWrap" hidden>
           <div class="f"><label for="vatfee">Ekspeditionsgebyr kr</label><input type="number" id="vatfee" min="0" step="1" inputmode="decimal"></div>
@@ -158,41 +216,168 @@ body{margin:0}
 
     <aside class="receipt" aria-live="polite">
       <div class="top">
-        <label>Du betaler reelt</label>
+        <span class="lbl">Du betaler reelt</span>
         <div class="total" id="total">0<span>kr</span></div>
         <div class="sub" id="subCny">¥0 i alt</div>
       </div>
-      <div class="lines" id="lines"></div>
+      <div class="rlines" id="rlines"></div>
       <div class="rate"><span>100 ¥ koster dig</span><b id="per100">–</b></div>
-      <div class="per" id="perWrap"><h3>Pris pr. vare inkl. fragt</h3><div id="per" class="lines" style="padding:0"></div></div>
+      <div class="rate"><span>Overfør via PayPal</span><b id="needUsd">–</b></div>
+      <div class="per" id="perWrap"><h3>Pris pr. vare inkl. fragt</h3><div id="per" class="rlines" style="padding:0"></div></div>
     </aside>
   </div>
 </div>
 
 <script>
-const DEF = {rate:100.12, pp:4.37, bt:7.32};
+// ---------- Data ----------
+// Basetaos takster til Danmark (hentet 28/10-2026 fra Basetaos fragtberegner).
+// pris = ff hvis vægt <= fw, ellers ff + loft((vægt - fw) / cw) * cf, plus cust. max = største vægt formlen gælder for.
+const DEFAULT_TARIFFS = { date: "2026-10-28", lines: [
+  { n:"Special DE-DHL (toldfri)", fw:100, ff:171, cw:100, cf:7.3, cust:0, max:15000, days:"11-20", vol:8000 },
+  { n:"EURO-DPD (toldfri)", fw:100, ff:174, cw:100, cf:7.2, cust:0, max:15000, days:"12-25", vol:8000 },
+  { n:"DE-DHL sensitiveness (toldfri)", fw:100, ff:170, cw:100, cf:7.5, cust:0, max:15000, days:"10-25", vol:8000 },
+  { n:"Fastest DE-DHL (toldfri)", fw:100, ff:174, cw:100, cf:7.6, cust:0, max:15000, days:"7-14", vol:8000 },
+  { n:"DPD sensitiveness (toldfri)", fw:100, ff:180, cw:100, cf:7.5, cust:0, max:3000, days:"21-35", vol:6000 },
+  { n:"Special China Post small package (toldfri)", fw:500, ff:183, cw:500, cf:46, cust:0, max:5000, days:"25-45", vol:6000 },
+  { n:"HK-DHL (kun umærkede varer)", fw:500, ff:190, cw:500, cf:35, cust:0, max:5000, days:"12-25", vol:5000 },
+  { n:"China Post SAL", fw:1000, ff:150, cw:1000, cf:46, cust:20, max:20000, days:"45-90", vol:0 },
+  { n:"China Post Big Air Mail", fw:1000, ff:170, cw:1000, cf:71, cust:28, max:20000, days:"35-80", vol:0 }
+]};
+// Dine indbetalinger fra PayPal til Basetao, matchet med Basetaos kontohistorik (ECB-kurser).
+const DEFAULT_LOG = [
+  { date:"2024-05-15", dkk:721.74,  usd:100, cny:663.08,  ud:6.8886, uc:7.2205 },
+  { date:"2024-05-28", dkk:143.84,  usd:20,  cny:131.55,  ud:6.8568, uc:7.2452 },
+  { date:"2024-07-22", dkk:1786.69, usd:250, cny:1672.90, ud:6.8531, uc:7.2732 },
+  { date:"2024-07-31", dkk:359.88,  usd:50,  cny:330.51,  ud:6.8915, uc:7.2215 },
+  { date:"2024-08-05", dkk:360.45,  usd:50,  cny:326.17,  ud:6.8035, uc:7.1171 },
+  { date:"2024-12-03", dkk:1485.75, usd:200, cny:1353.42, ud:7.0956, uc:7.2859 },
+  { date:"2024-12-12", dkk:296.55,  usd:40,  cny:267.85,  ud:7.1092, uc:7.2702 },
+  { date:"2024-12-14", dkk:148.65,  usd:20,  cny:133.08,  ud:7.0898, uc:7.2742 },
+  { date:"2025-07-27", dkk:1993.25, usd:300, cny:1993.35, ud:6.3668, uc:7.1687 },
+  { date:"2025-08-08", dkk:401.76,  usd:60,  cny:398.19,  ud:6.4074, uc:7.1838 },
+  { date:"2025-09-03", dkk:1339.04, usd:200, cny:1324.34, ud:6.4046, uc:7.1456 },
+  { date:"2026-07-16", dkk:1024.20, usd:150, cny:937.51,  ud:6.5190, uc:6.7669 }
+];
+const DEF = { rate:100.12, pp:4.37, bt:7.32 };
 const EXAMPLE = {
   items:[
     {name:"Solbriller", price:198, qty:1, w:320},
     {name:"Sko 9060", price:250, qty:1, w:840},
     {name:"Hjemmesko", price:200, qty:1, w:760}
   ],
-  domestic:10, intl:338, extra:0, rate:DEF.rate, pp:DEF.pp, bt:DEF.bt, vat:false, vatfee:0, example:true
+  domestic:10, intl:338, intlMode:"auto", line:"Special DE-DHL (toldfri)", pack:0, extra:0,
+  rate:DEF.rate, pp:DEF.pp, bt:DEF.bt, useLog:true, logN:0, vat:false, vatfee:0, example:true,
+  log: DEFAULT_LOG, tariffs: DEFAULT_TARIFFS
 };
-const KEY = "haulberegner-v1";
-let S;
-try{ S = JSON.parse(localStorage.getItem(KEY)) || null }catch(e){ S = null }
-if(!S) S = structuredClone(EXAMPLE);
+const KEY = "haulberegner-v2";
+let S = null;
+try { S = JSON.parse(localStorage.getItem(KEY)) } catch(e) {}
+if (!S) {
+  S = structuredClone(EXAMPLE);
+  try { const old = JSON.parse(localStorage.getItem("haulberegner-v1")); if (old && old.items) Object.assign(S, { items:old.items, domestic:old.domestic, intl:old.intl, extra:old.extra, vat:old.vat, vatfee:old.vatfee, example:!!old.example, intlMode:"manual" }); } catch(e) {}
+}
+for (const k of Object.keys(EXAMPLE)) if (S[k] === undefined) S[k] = structuredClone(EXAMPLE[k]);
 
+// ---------- Hjælpere ----------
 const $ = id => document.getElementById(id);
-const num = v => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : 0 };
-const kr = n => n.toLocaleString("da-DK",{minimumFractionDigits:2, maximumFractionDigits:2});
-const kr0 = n => n.toLocaleString("da-DK",{maximumFractionDigits:0});
-const yuan = n => "¥" + n.toLocaleString("da-DK",{minimumFractionDigits:0, maximumFractionDigits:2});
+const num = v => { const n = parseFloat(String(v ?? "").replace(",", ".")); return isFinite(n) ? n : 0 };
+const fmt = (n, d=2) => n.toLocaleString("da-DK", { minimumFractionDigits:d, maximumFractionDigits:d });
+const kr0 = n => n.toLocaleString("da-DK", { maximumFractionDigits:0 });
+const yuan = n => "¥" + n.toLocaleString("da-DK", { minimumFractionDigits:0, maximumFractionDigits:2 });
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)) } catch(e) {} }
+function touch(){ if (S.example) { S.example = false; $("exampleTag").hidden = true } }
+function msg(id, t, ok){ const m = $(id); m.textContent = t; m.className = "msg " + (ok ? "ok" : "err") }
 
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)) }catch(e){} }
-function touch(){ if(S.example){ S.example=false; $("exampleTag").hidden = true } }
+// ---------- Fragt ----------
+function linePrice(L, g){
+  if (!g || g <= 0 || g > L.max) return null;
+  const units = g <= L.fw ? 0 : Math.ceil((g - L.fw) / L.cw - 1e-9);
+  return Math.round((L.ff + units * L.cf + (L.cust || 0)) * 100) / 100;
+}
+function totalWeight(){ return S.items.reduce((a,it)=>a + num(it.w), 0) + num(S.pack) }
+function renderLines(){
+  const g = totalWeight();
+  $("weightLabel").textContent = g ? fmt(g/1000, 2) + " kg" : "Ingen vægt";
+  const box = $("autoBox");
+  const priced = S.tariffs.lines.map(L => ({ L, p: linePrice(L, g) }));
+  const valid = priced.filter(x => x.p !== null);
+  const cheapest = valid.length ? Math.min(...valid.map(x => x.p)) : null;
+  if (!g) { box.innerHTML = '<p class="hint">Skriv vægt på varerne for at få et fragtestimat.</p>'; return }
+  if (!valid.find(x => x.L.n === S.line) && valid.length) S.line = valid.find(x => x.p === cheapest).L.n;
+  box.innerHTML = priced.map(({L,p}, i) => `
+    <label class="opt ${p===null ? "off" : ""} ${L.n===S.line && p!==null ? "sel" : ""}">
+      <input type="radio" name="line" id="line${i}" value="${esc(L.n)}" ${L.n===S.line && p!==null ? "checked" : ""} ${p===null ? "disabled" : ""}>
+      <span class="nm">${esc(L.n)}${p!==null && p===cheapest ? '<span class="cheap">Billigst</span>' : ""}<small>${L.days} dage${p===null ? " · max " + (L.max/1000) + " kg" : ""}${L.cust ? " · inkl. ¥" + L.cust + " tolddeklaration" : ""}</small></span>
+      <b>${p===null ? "–" : yuan(p)}</b>
+    </label>`).join("");
+  box.querySelectorAll("input[name=line]").forEach(r => r.onchange = () => { S.line = r.value; touch(); calc() });
+}
+function intlCny(){
+  if (S.intlMode === "manual") return num(S.intl);
+  const L = S.tariffs.lines.find(x => x.n === S.line);
+  return L ? (linePrice(L, totalWeight()) || 0) : 0;
+}
 
+// ---------- Indbetalinger ----------
+function rowCalc(r){
+  const dkk = num(r.dkk), usd = num(r.usd), cny = num(r.cny), ud = num(r.ud), uc = num(r.uc);
+  const out = { pp:null, bt:null, btUsd:null, per100:null };
+  if (dkk && usd && ud) out.pp = (dkk - usd*ud) / dkk;
+  if (usd && cny && uc) { out.btUsd = 1 - cny/(usd*uc); if (dkk && ud) out.bt = (usd - cny/uc)*ud / dkk }
+  if (dkk && cny) out.per100 = dkk / cny * 100;
+  return out;
+}
+function logStats(){
+  const rows = [...S.log].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const use = S.logN ? rows.slice(-S.logN) : rows;
+  let w=0, pp=0, bw=0, bt=0, bu=0, buw=0, n=0;
+  for (const r of use) {
+    const c = rowCalc(r), dkk = num(r.dkk);
+    if (c.pp !== null) { pp += c.pp*dkk; w += dkk }
+    if (c.bt !== null) { bt += c.bt*dkk; bw += dkk; n++ }
+    if (c.btUsd !== null) { const v = num(r.usd); bu += c.btUsd*v; buw += v }
+  }
+  return { pp: w ? pp/w*100 : null, bt: bw ? bt/bw*100 : null, btUsd: buw ? bu/buw : null, n, count: use.length };
+}
+function renderLog(){
+  const body = $("logBody");
+  const order = S.log.map((r,i)=>i).sort((a,b)=>String(S.log[b].date).localeCompare(String(S.log[a].date)));
+  const st = logStats();
+  body.innerHTML = order.map(i => {
+    const r = S.log[i], c = rowCalc(r);
+    let cnyCell = `<input type="number" data-i="${i}" data-k="cny" step="0.01" value="${r.cny ?? ""}" aria-label="Yuan krediteret">`;
+    let estNote = "";
+    if (!num(r.cny) && num(r.usd) && num(r.uc) && st.btUsd !== null) estNote = `<td class="est">≈ ${yuan(num(r.usd)*num(r.uc)*(1-st.btUsd))}</td>`;
+    const pct = v => v===null ? "–" : fmt(v*100, 1) + " %";
+    return `<tr>
+      <td><input type="date" data-i="${i}" data-k="date" value="${esc(r.date || "")}" aria-label="Dato"></td>
+      <td><input type="number" data-i="${i}" data-k="dkk" step="0.01" value="${r.dkk ?? ""}" aria-label="Trukket i kroner"></td>
+      <td><input type="number" data-i="${i}" data-k="usd" step="0.01" value="${r.usd ?? ""}" aria-label="Sendt i dollar"></td>
+      <td>${cnyCell}</td>
+      <td><input type="number" data-i="${i}" data-k="ud" step="0.0001" value="${r.ud ?? ""}" aria-label="Markedskurs kroner pr. dollar"></td>
+      <td><input type="number" data-i="${i}" data-k="uc" step="0.0001" value="${r.uc ?? ""}" aria-label="Markedskurs yuan pr. dollar"></td>
+      <td class="out ${c.pp>0.05?"bad":""}">${pct(c.pp)}</td>
+      ${estNote ? estNote : `<td class="out ${c.bt>0.08?"bad":""}">${pct(c.bt)}</td>`}
+      <td class="out">${c.per100===null ? "–" : fmt(c.per100)}</td>
+      <td><button class="del" type="button" data-del="${i}" aria-label="Fjern indbetaling">×</button></td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="10" style="text-align:left;color:var(--muted)">Ingen indbetalinger endnu. Tilføj en, eller hent dem fra Basetao.</td></tr>`;
+  body.querySelectorAll("input").forEach(el => el.onchange = () => {
+    const r = S.log[+el.dataset.i], k = el.dataset.k;
+    r[k] = k === "date" ? el.value : (el.value === "" ? null : num(el.value));
+    renderLog(); calc();
+  });
+  body.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { S.log.splice(+b.dataset.del, 1); renderLog(); calc() });
+  const total = S.log.reduce((a,r)=>a+num(r.dkk),0);
+  $("stats").innerHTML = `
+    <div class="stat"><span class="lbl">PayPal-tab</span><b>${st.pp===null?"–":fmt(st.pp,2)+" %"}</b></div>
+    <div class="stat"><span class="lbl">Basetao-tab</span><b>${st.bt===null?"–":fmt(st.bt,2)+" %"}</b></div>
+    <div class="stat"><span class="lbl">Tab i alt</span><b>${st.pp===null||st.bt===null?"–":fmt(st.pp+st.bt,2)+" %"}</b></div>
+    <div class="stat"><span class="lbl">Overført</span><b>${kr0(total)} kr</b></div>`;
+}
+
+// ---------- Varer ----------
 function renderItems(){
   const box = $("items"); box.innerHTML = "";
   S.items.forEach((it,i)=>{
@@ -214,99 +399,147 @@ function renderItems(){
   });
 }
 
-function bindField(id, key){
-  const el = $(id); el.value = S[key];
-  el.oninput = () => { S[key] = num(el.value); touch(); calc() };
+// ---------- Beregning ----------
+function effLoss(){
+  if (S.useLog) { const st = logStats(); if (st.pp !== null && st.bt !== null) return { pp: st.pp, bt: st.bt, src:"log", n: st.count } }
+  return { pp: num(S.pp), bt: num(S.bt), src:"manual" };
 }
-
 function calc(){
+  renderLines();
+  const loss = effLoss();
+  if (loss.src === "log") { $("pp").value = loss.pp.toFixed(2); $("bt").value = loss.bt.toFixed(2) }
+  $("pp").disabled = $("bt").disabled = loss.src === "log";
+  $("assumpNote").textContent = loss.src === "log"
+    ? `Tabene kommer fra ${S.logN ? "dine seneste " + loss.n : "alle dine " + loss.n} indbetalinger. Slå "Brug gennemsnittet" fra under Indbetalinger for at skrive dem selv.`
+    : "Tabene er skrevet ind manuelt.";
   const goods = S.items.reduce((a,it)=>a + num(it.price)*(num(it.qty)||1), 0);
-  const ship = num(S.domestic) + num(S.intl);
+  const intl = intlCny();
+  const ship = num(S.domestic) + intl;
   const extra = num(S.extra);
   const cny = goods + ship + extra;
-  const perKr = num(S.rate)/100;                 // markedskurs kr pr. ¥
-  const lossFrac = (num(S.pp)+num(S.bt))/100;    // tab i % af det du betaler
-  const factor = 1/(1 - Math.min(lossFrac, .9)); // kr betalt pr. kr markedsværdi
-  const market = cny*perKr;
-  const paid = market*factor;
-  const ppLoss = paid*num(S.pp)/100, btLoss = paid*num(S.bt)/100;
+  const perKr = num(S.rate)/100;
+  const lossFrac = (loss.pp + loss.bt)/100;
+  const factor = 1/(1 - Math.min(lossFrac, .9));
+  const paid = cny*perKr*factor;
+  const ppLoss = paid*loss.pp/100, btLoss = paid*loss.bt/100;
   let vat = 0, vatfee = 0;
-  if(S.vat){ vat = (goods + ship)*perKr*0.25; vatfee = num(S.vatfee) }
+  if (S.vat) { vat = (goods + ship)*perKr*0.25; vatfee = num(S.vatfee) }
   const total = paid + vat + vatfee;
 
   $("total").innerHTML = kr0(total) + "<span>kr</span>";
-  $("subCny").textContent = yuan(cny) + " i alt · " + kr(total) + " kr";
-  const L = [
-    ["Varer", goods*perKr*factor],
-    ["Fragt", ship*perKr*factor],
-  ];
-  if(extra) L.push(["Andre gebyrer", extra*perKr*factor]);
-  let html = L.map(([a,b])=>`<div class="ln"><span>${a}</span><b>${kr(b)}</b></div>`).join("");
-  html += `<div class="ln loss"><span>heraf PayPal</span><b>${kr(ppLoss)}</b></div>`;
-  html += `<div class="ln loss"><span>heraf Basetao</span><b>${kr(btLoss)}</b></div>`;
-  if(S.vat){
-    html += `<div class="ln"><span>Moms 25 %</span><b>${kr(vat)}</b></div>`;
-    if(vatfee) html += `<div class="ln"><span>Ekspeditionsgebyr</span><b>${kr(vatfee)}</b></div>`;
-  }
-  html += `<div class="ln sum"><span>I alt</span><b>${kr(total)} kr</b></div>`;
-  $("lines").innerHTML = html;
-  $("per100").textContent = kr(100*perKr*factor) + " kr";
+  $("subCny").textContent = yuan(cny) + " i alt · " + fmt(total) + " kr";
+  const lineName = S.intlMode === "auto" ? (S.line || "") : "skrevet selv";
+  let h = `<div class="ln"><span>Varer</span><b>${fmt(goods*perKr*factor)}</b></div>`;
+  h += `<div class="ln"><span>Fragt i Kina</span><b>${fmt(num(S.domestic)*perKr*factor)}</b></div>`;
+  h += `<div class="ln"><span title="${esc(lineName)}">Fragt til DK · ${esc(lineName)}</span><b>${fmt(intl*perKr*factor)}</b></div>`;
+  if (extra) h += `<div class="ln"><span>Andre gebyrer</span><b>${fmt(extra*perKr*factor)}</b></div>`;
+  h += `<div class="ln loss"><span>heraf PayPal ${fmt(loss.pp,1)} %</span><b>${fmt(ppLoss)}</b></div>`;
+  h += `<div class="ln loss"><span>heraf Basetao ${fmt(loss.bt,1)} %</span><b>${fmt(btLoss)}</b></div>`;
+  if (S.vat) { h += `<div class="ln"><span>Moms 25 %</span><b>${fmt(vat)}</b></div>`; if (vatfee) h += `<div class="ln"><span>Ekspeditionsgebyr</span><b>${fmt(vatfee)}</b></div>` }
+  h += `<div class="ln sum"><span>I alt</span><b>${fmt(total)} kr</b></div>`;
+  $("rlines").innerHTML = h;
+  $("per100").textContent = fmt(100*perKr*factor) + " kr";
+  // Hvor mange dollar skal sendes for at dække beløbet i yuan
+  const st = logStats(), last = [...S.log].filter(r=>num(r.uc)).sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];
+  if (st.btUsd !== null && last) { const usd = cny / (num(last.uc)*(1-st.btUsd)); $("needUsd").textContent = "ca. $" + fmt(Math.ceil(usd), 0) }
+  else $("needUsd").textContent = "–";
 
-  // pris pr. vare med fordelt fragt
   const valid = S.items.filter(it=>num(it.price)>0);
   const byWeight = valid.length && valid.every(it=>num(it.w)>0);
-  const base = byWeight ? valid.reduce((a,it)=>a+num(it.w)*(num(it.qty)||1),0) : goods;
+  const base = byWeight ? valid.reduce((a,it)=>a+num(it.w),0) : goods;
   const shared = ship + extra;
   $("perWrap").hidden = !valid.length;
   $("per").innerHTML = valid.map(it=>{
     const q = num(it.qty)||1;
-    const share = base ? (byWeight ? num(it.w)*q : num(it.price)*q)/base : 0;
-    const itemCny = num(it.price)*q + shared*share;
-    let itemKr = itemCny*perKr*factor;
-    if(S.vat) itemKr += (num(it.price)*q + ship*share)*perKr*0.25 + vatfee*share;
+    const share = base ? (byWeight ? num(it.w) : num(it.price)*q)/base : 0;
+    let k = (num(it.price)*q + shared*share)*perKr*factor;
+    if (S.vat) k += (num(it.price)*q + ship*share)*perKr*0.25 + vatfee*share;
     const label = (it.name || "Vare") + (q>1 ? ` ×${q}` : "");
-    return `<div class="ln"><span title="${label.replace(/"/g,'&quot;')}">${label.replace(/</g,'&lt;')}</span><b>${kr(itemKr)}</b></div>`;
+    return `<div class="ln"><span title="${esc(label)}">${esc(label)}</span><b>${fmt(k)}</b></div>`;
   }).join("") + `<p class="hint" style="margin-top:4px">Fragten er fordelt efter ${byWeight ? "vægt" : "pris"}.</p>`;
+  $("tariffNote").textContent = `Takster fra Basetao pr. ${S.tariffs.date}. Estimatet bruger den faktiske vægt. Store, lette pakker kan blive dyrere, hvis rumfangsvægten er højere. Basetao fjerner normalt noget emballage, så den endelige vægt kan blive lidt lavere.`;
   save();
 }
 
-$("exampleTag").hidden = !S.example;
-renderItems();
-bindField("domestic","domestic"); bindField("intl","intl"); bindField("extra","extra");
-bindField("rate","rate"); bindField("pp","pp"); bindField("bt","bt"); bindField("vatfee","vatfee");
-$("vat").checked = !!S.vat; $("vatFeeWrap").hidden = !S.vat;
-$("vat").onchange = e => { S.vat = e.target.checked; $("vatFeeWrap").hidden = !S.vat; touch(); calc() };
-$("addItem").onclick = () => { S.items.push({name:"",price:0,qty:1,w:0}); touch(); renderItems(); calc(); $("n"+(S.items.length-1)).focus() };
-$("resetAssump").onclick = () => { Object.assign(S, DEF); ["rate","pp","bt"].forEach(k=>$(k).value=S[k]); calc() };
+// ---------- Kurser ----------
+async function frank(date){
+  const r = await fetch(`https://api.frankfurter.dev/v1/${date}?from=USD&to=DKK,CNY`);
+  if (!r.ok) throw new Error(r.status);
+  const j = await r.json(); return { ud: j.rates.DKK, uc: j.rates.CNY, date: j.date };
+}
+$("fetchRates").onclick = async () => {
+  const todo = S.log.filter(r => r.date && (!num(r.ud) || !num(r.uc)));
+  if (!todo.length) { msg("logMsg", "Alle indbetalinger har allerede markedskurser.", true); return }
+  try {
+    for (const r of todo) { const k = await frank(r.date); r.ud = k.ud; r.uc = k.uc }
+    renderLog(); calc(); msg("logMsg", `Hentede kurser for ${todo.length} indbetaling${todo.length>1?"er":""} fra ECB.`, true);
+  } catch(e) { msg("logMsg", "Kunne ikke hente kurser her. Åbn beregneren på GitHub Pages, eller skriv kurserne selv (fx fra ECB).", false) }
+};
+$("fetchToday").onclick = async () => {
+  try {
+    const r = await fetch("https://api.frankfurter.dev/v1/latest?from=CNY&to=DKK");
+    const j = await r.json(); S.rate = Math.round(j.rates.DKK*10000)/100; $("rate").value = S.rate; calc();
+    msg("rateMsg", `100 ¥ = ${fmt(S.rate)} kr (ECB ${j.date}).`, true);
+  } catch(e) { msg("rateMsg", "Kunne ikke hente kursen her. Skriv den selv.", false) }
+};
 
-// ---- Import fra Basetao-fetcheren ----
-const SCRIPT_URL = "basetao-fetcher.js";
-function showMsg(t, ok){ const m = $("importMsg"); m.textContent = t; m.className = "msg " + (ok ? "ok" : "err") }
+// ---------- Import ----------
 function importData(raw){
   let d;
-  try { d = JSON.parse(String(raw).trim()) } catch(e){ showMsg("Teksten er ikke data fra fetcher-scriptet. Kopiér hele linjen fra konsollen og prøv igen.", false); return }
-  if(!d || d.source !== "basetao" || !Array.isArray(d.items)){ showMsg("Data mangler varer. Kør fetcher-scriptet på basetao.com igen.", false); return }
-  if(!d.items.length){ showMsg("Scriptet fandt ingen varer. Har du varer på lageret eller en afsendt pakke?", false); return }
-  S.items = d.items.map(i => ({ name: String(i.name || "").slice(0,110), price: num(i.price), qty: Math.max(1, num(i.qty) || 1), w: num(i.w) }));
-  S.domestic = num(d.domestic);
-  if(num(d.intl) > 0) S.intl = num(d.intl);
-  S.example = false; $("exampleTag").hidden = true;
-  renderItems(); ["domestic","intl"].forEach(k => $(k).value = S[k]); calc();
-  const r = (d.recharges || [])[0];
-  showMsg(`Indlæst ${d.items.length} varer` + (d.kind === "waybill" ? ` fra pakke ${d.waybill}` : " der ikke er sendt endnu") +
-    (num(d.intl) > 0 ? `, inkl. fragt til Danmark ¥${d.intl}` : ". Skriv fragten til Danmark, når du kender den") +
-    (r ? `. Basetaos seneste kurs: ¥${r.cnyPerUsd} pr. $.` : "."), true);
+  try { d = JSON.parse(String(raw).trim()) } catch(e) { msg("importMsg", "Teksten er ikke data fra fetcher-scriptet. Kopiér hele linjen fra konsollen og prøv igen.", false); return }
+  if (!d || d.source !== "basetao") { msg("importMsg", "Data kommer ikke fra fetcher-scriptet. Kør det på basetao.com igen.", false); return }
+  const parts = [];
+  if (Array.isArray(d.items) && d.items.length) {
+    S.items = d.items.map(i => ({ name:String(i.name||"").slice(0,110), price:num(i.price), qty:Math.max(1,num(i.qty)||1), w:num(i.w) }));
+    S.domestic = num(d.domestic);
+    if (d.kind === "waybill" && num(d.intl) > 0) { S.intl = num(d.intl); S.intlMode = "manual"; parts.push(`${d.items.length} varer fra pakke ${d.waybill} med den faktiske fragt ¥${d.intl}`) }
+    else { S.intlMode = "auto"; parts.push(`${d.items.length} varer der ikke er sendt endnu`) }
+    S.example = false; $("exampleTag").hidden = true;
+  }
+  if (d.tariffs && Array.isArray(d.tariffs.lines) && d.tariffs.lines.length) { S.tariffs = d.tariffs; parts.push(`${d.tariffs.lines.length} fragtlinjer`) }
+  if (Array.isArray(d.recharges)) {
+    let added = 0;
+    for (const r of d.recharges) {
+      const hit = S.log.find(x => x.date && Math.abs(new Date(x.date) - new Date(r.date)) <= 2*864e5 && num(x.usd) === num(r.usd));
+      if (hit) { if (!num(hit.cny)) hit.cny = r.cny }
+      else { S.log.push({ date:r.date, dkk:null, usd:r.usd, cny:r.cny, ud:null, uc:null }); added++ }
+    }
+    if (added) parts.push(`${added} nye indbetalinger (skriv beløbet i kroner fra PayPal)`);
+  }
+  renderItems(); syncFields(); renderLog(); calc();
+  msg("importMsg", parts.length ? "Indlæst: " + parts.join(", ") + "." : "Der var intet nyt at indlæse.", true);
 }
 $("doImport").onclick = () => importData($("importBox").value);
-$("importBox").addEventListener("paste", e => { const t = (e.clipboardData || window.clipboardData)?.getData("text"); if(t && t.trim().startsWith("{")){ e.preventDefault(); $("importBox").value = t; importData(t) } });
+$("importBox").addEventListener("paste", e => { const t = (e.clipboardData || window.clipboardData)?.getData("text"); if (t && t.trim().startsWith("{")) { e.preventDefault(); $("importBox").value = t; importData(t) } });
 $("copyScript").onclick = async () => {
-  try {
-    const src = await (await fetch(SCRIPT_URL)).text();
-    await navigator.clipboard.writeText(src);
-    showMsg("Scriptet er kopieret. Indsæt det i konsollen på basetao.com.", true);
-  } catch(e){ showMsg("Kunne ikke kopiere automatisk. Åbn linket til fetcher-scriptet og kopiér teksten derfra.", false) }
+  try { const src = await (await fetch("basetao-fetcher.js")).text(); await navigator.clipboard.writeText(src); msg("importMsg", "Scriptet er kopieret. Indsæt det i konsollen på basetao.com.", true) }
+  catch(e) { msg("importMsg", "Kunne ikke kopiere automatisk. Åbn linket til fetcher-scriptet og kopiér teksten derfra.", false) }
 };
-calc();
+
+// ---------- Opsætning ----------
+function bind(id, key){ const el = $(id); el.oninput = () => { S[key] = num(el.value); touch(); calc() } }
+function syncFields(){
+  ["domestic","intl","extra","pack","rate","vatfee"].forEach(k => $(k).value = S[k] ?? "");
+  $("useLog").checked = !!S.useLog; $("logN").value = String(S.logN || 0);
+  $("vat").checked = !!S.vat; $("vatFeeWrap").hidden = !S.vat;
+  $("modeAuto").setAttribute("aria-pressed", S.intlMode === "auto"); $("modeManual").setAttribute("aria-pressed", S.intlMode !== "auto");
+  $("autoBox").hidden = S.intlMode !== "auto"; $("manualBox").hidden = S.intlMode === "auto";
+  if (!S.useLog) { $("pp").value = S.pp; $("bt").value = S.bt }
+}
+["domestic","intl","extra","pack","rate","vatfee"].forEach(k => bind(k, k));
+$("pp").oninput = () => { S.pp = num($("pp").value); calc() };
+$("bt").oninput = () => { S.bt = num($("bt").value); calc() };
+$("modeAuto").onclick = () => { S.intlMode = "auto"; syncFields(); calc() };
+$("modeManual").onclick = () => { if (S.intlMode === "auto") S.intl = intlCny(); S.intlMode = "manual"; syncFields(); calc() };
+$("useLog").onchange = e => { S.useLog = e.target.checked; if (!S.useLog) { const st = logStats(); if (st.pp!==null) S.pp = Math.round(st.pp*100)/100; if (st.bt!==null) S.bt = Math.round(st.bt*100)/100 } syncFields(); calc() };
+$("logN").onchange = e => { S.logN = +e.target.value; renderLog(); calc() };
+$("vat").onchange = e => { S.vat = e.target.checked; syncFields(); touch(); calc() };
+$("addItem").onclick = () => { S.items.push({name:"",price:0,qty:1,w:0}); touch(); renderItems(); calc(); $("n"+(S.items.length-1)).focus() };
+$("addLog").onclick = () => { S.log.push({ date:new Date().toISOString().slice(0,10), dkk:null, usd:null, cny:null, ud:null, uc:null }); renderLog(); calc() };
+$("resetAssump").onclick = () => { Object.assign(S, DEF); S.useLog = true; syncFields(); calc() };
+
+$("exampleTag").hidden = !S.example;
+renderItems(); syncFields(); renderLog(); calc();
 </script>
 </body>
 </html>
