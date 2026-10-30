@@ -85,6 +85,16 @@ code{font-family:var(--f-mono);font-size:12px;background:var(--field);border:1px
 .opt b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
 .opt.sel{border-color:var(--accent);background:var(--accent-soft)}
 .opt.off{opacity:.45;cursor:not-allowed}
+.sweet{display:grid;gap:4px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-size:14px}
+.sweet strong{font-family:var(--f-display);font-size:15px}
+.sweet.low{border-color:var(--stamp);background:color-mix(in srgb,var(--stamp) 8%,var(--paper))}
+.sweet.low strong{color:var(--stamp)}
+.sweet.good{border-color:var(--accent);background:var(--accent-soft)}
+.sweet.good strong{color:var(--accent)}
+.sweet .meter{position:relative;height:8px;border-radius:4px;background:var(--field);border:1px solid var(--line);margin-top:4px;overflow:hidden}
+.sweet .zone{position:absolute;top:0;bottom:0;background:var(--accent);opacity:.35}
+.sweet .mark{position:absolute;top:-2px;bottom:-2px;width:3px;background:var(--ink);border-radius:2px}
+.sweet .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--f-mono)}
 .cheap{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 5px;margin-left:6px}
 /* log */
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
@@ -140,7 +150,7 @@ td.est{color:var(--muted);font-style:italic}
         <ol class="steps">
           <li>Log ind på basetao.com og tryk <code>F12</code> → fanen Console.</li>
           <li>Kopiér <a href="basetao-fetcher.js" target="_blank" rel="noopener">fetcher-scriptet</a>, indsæt det i konsollen og tryk Enter.</li>
-          <li>Indsæt resultatet her og tryk Indlæs. Varer, fragttakster og indbetalinger bliver hentet.</li>
+          <li>En boks med dine varer vises på Basetao. Tryk "Åbn i Haulberegner", så indlæses alt her. Eller tryk "Kopiér data" og indsæt nedenfor.</li>
         </ol>
         <div class="bar"><button class="ghost" id="copyScript" type="button">Kopiér scriptet</button></div>
         <textarea id="importBox" aria-label="Data fra Basetao-fetcheren" placeholder='{"source":"basetao", …}'></textarea>
@@ -178,6 +188,7 @@ td.est{color:var(--muted);font-style:italic}
           <div class="f"><label for="domestic">Fragt i Kina ¥</label><input type="number" id="domestic" min="0" step="0.01" inputmode="decimal"></div>
           <div class="f"><label for="extra">Andre gebyrer ¥</label><input type="number" id="extra" min="0" step="0.01" inputmode="decimal"></div>
         </div>
+        <div class="sweet" id="sweet" role="status" hidden></div>
         <p class="hint" id="tariffNote"></p>
       </section>
 
@@ -318,6 +329,44 @@ function renderLines(){
     </label>`).join("");
   box.querySelectorAll("input[name=line]").forEach(r => r.onchange = () => { S.line = r.value; touch(); calc() });
 }
+// Sweet spot: fra hvilken vægt fragten pr. kg er højst 20 % over den laveste mulige på linjen
+function renderSweet(krPerCny){
+  const box = $("sweet"), g = totalWeight();
+  const priced = S.tariffs.lines.map(L => ({ L, p: linePrice(L, g) })).filter(x => x.p !== null);
+  let L = S.intlMode === "auto" ? S.tariffs.lines.find(x => x.n === S.line) : null;
+  if (!L || linePrice(L, g) === null) L = priced.length ? priced.reduce((a,b) => a.p <= b.p ? a : b).L : S.tariffs.lines.find(x => x.max >= 15000) || S.tariffs.lines[0];
+  if (!L || !g) { box.hidden = true; return }
+  const perKg = w => linePrice(L, w) * krPerCny / (w/1000);
+  const best = perKg(L.max);
+  let from = L.cw;
+  while (from < L.max && perKg(from) > best*1.2) from += L.cw;
+  const to = Math.min(L.max, Math.max(from + 3000, 10000));
+  const nowPrice = linePrice(L, g);
+  const kg = w => fmt(w/1000, 1).replace(",0", "") + " kg";
+  let cls, head, body;
+  if (nowPrice === null) {
+    cls = "low"; head = `Pakken er for tung til ${L.n}`;
+    body = `Linjen tager højst ${kg(L.max)}. Del varerne i ${Math.ceil(g/L.max)} pakker på hver ${kg(Math.min(L.max, Math.ceil(g/Math.ceil(g/L.max)/100)*100))}.`;
+  } else if (g < from) {
+    const extra = from - g, add = (linePrice(L, from) - nowPrice) * krPerCny;
+    cls = "low"; head = `Under sweet spot: ${fmt(perKg(g),0)} kr pr. kg`;
+    body = `Fra ca. ${kg(from)} falder fragten til ${fmt(perKg(from),0)} kr pr. kg. Du kan lægge ${kg(extra)} mere i pakken for ca. ${fmt(add,0)} kr ekstra i fragt` +
+      (g < 2000 ? `. Sendt alene koster fragten ${fmt(nowPrice*krPerCny,0)} kr, så vent hellere og saml flere varer.` : ".");
+  } else {
+    cls = "good"; head = `I sweet spot: ${fmt(perKg(g),0)} kr pr. kg`;
+    body = g <= to
+      ? `Fra ${kg(from)} og op er prisen pr. kg tæt på det laveste, ${L.n} kan give (${fmt(best,0)} kr pr. kg ved ${kg(L.max)}). Mere vægt sparer kun lidt.`
+      : `Prisen pr. kg falder kun lidt herfra. Husk at mere værdi i én pakke betyder større tab, hvis den bliver væk eller tilbageholdt.`;
+  }
+  const next = g < L.max && nowPrice !== null ? (g <= L.fw ? L.fw : L.fw + Math.ceil((g - L.fw)/L.cw - 1e-9)*L.cw) : null;
+  if (next !== null && next - g > 0 && next - g < L.cw) body += ` Næste prisspring er ved ${fmt(next/1000,2)} kg, så de næste ${fmt(next - g,0)} g er gratis.`;
+  const pos = x => Math.max(0, Math.min(100, x / L.max * 100));
+  box.className = "sweet " + cls;
+  box.innerHTML = `<strong>${head}</strong><span>${body}</span>
+    <div class="meter" aria-hidden="true"><div class="zone" style="left:${pos(from)}%;width:${pos(to)-pos(from)}%"></div><div class="mark" style="left:calc(${pos(g)}% - 1px)"></div></div>
+    <div class="scale" aria-hidden="true"><span>0</span><span>Sweet spot ${kg(from)}–${kg(to)} · ${esc(L.n)}</span><span>${kg(L.max)}</span></div>`;
+  box.hidden = false;
+}
 function intlCny(){
   if (S.intlMode === "manual") return num(S.intl);
   const L = S.tariffs.lines.find(x => x.n === S.line);
@@ -453,6 +502,7 @@ function calc(){
   const byWeight = valid.length && valid.every(it=>num(it.w)>0);
   const base = byWeight ? valid.reduce((a,it)=>a+num(it.w),0) : goods;
   const shared = ship + extra;
+  renderSweet(perKr*factor);
   $("perWrap").hidden = !valid.length;
   $("per").innerHTML = valid.map(it=>{
     const q = num(it.qty)||1;
@@ -545,6 +595,19 @@ $("resetAssump").onclick = () => { Object.assign(S, DEF); S.useLog = true; syncF
 
 $("exampleTag").hidden = !S.example;
 renderItems(); syncFields(); renderLog(); calc();
+// Data fra fetcher-boksen på Basetao ("Åbn i Haulberegner")
+(function(){
+  const h = location.hash;
+  if (!h.startsWith("#data=")) return;
+  try {
+    const b64 = h.slice(6).replace(/-/g, "+").replace(/_/g, "/");
+    const bin = atob(b64 + "===".slice((b64.length + 3) % 4));
+    const text = new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+    importData(text);
+    $("importMsg").scrollIntoView({ block: "center" });
+  } catch(e) { msg("importMsg", "Data fra Basetao kunne ikke læses. Brug \"Kopiér data\" i boksen og indsæt her.", false) }
+  try { history.replaceState(null, "", location.pathname + location.search) } catch(e) { location.hash = "" }
+})();
 </script>
 </body>
 </html>

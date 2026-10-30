@@ -6,8 +6,9 @@
   2. Tryk F12, vælg fanen "Console" (Konsol).
   3. Indsæt hele dette script og tryk Enter.
      (Chrome kan bede dig skrive "allow pasting" første gang.)
-  4. Scriptet kopierer resultatet til udklipsholderen.
-  5. Åbn Haulberegneren, tryk "Importér fra Basetao" og indsæt.
+  4. En boks med dine varer vises øverst til højre på siden.
+  5. Tryk "Åbn i Haulberegner". Varerne, fragttaksterne og indbetalingerne
+     indlæses automatisk. ("Kopiér data" virker også, hvis du foretrækker at indsætte.)
 
   Hvad scriptet henter:
   - Varer, der endnu ikke er sendt (afventer, bestilt, ankommet til lageret osv.).
@@ -135,19 +136,80 @@
   };
 
   const text = JSON.stringify(result);
-  let copied = false;
-  try { if (typeof copy === "function") { copy(text); copied = true; } } catch (e) {}
-  if (!copied) { try { await navigator.clipboard.writeText(text); copied = true; } catch (e) {} }
+  const CALC_URL = "https://alangeland.github.io/Taobao_Unchained/";
 
-  console.log(
-    `%cHaulberegner: ${items.length} varer (${source === "waybill" ? "pakke " + waybill : "ikke afsendt"}), ` +
-    `fragt i Kina ¥${domestic}` + (intl ? `, fragt til DK ¥${intl}` : "") +
-    (recharges[0] ? `, seneste kurs ¥${recharges[0].cnyPerUsd} pr. $` : "") +
-    (tariffs ? `, ${tariffs.lines.length} fragtlinjer` : ""),
-    "font-weight:bold;color:#0f6b5c"
-  );
-  console.table(result.items.map(i => ({ vare: i.name, "pris ¥": i.price, antal: i.qty, "vægt g": i.w })));
-  if (copied) console.log("Kopieret til udklipsholderen. Indsæt det i Haulberegneren under \"Importér fra Basetao\".");
-  else console.log("Kunne ikke kopiere automatisk. Markér og kopiér teksten nedenfor:\n\n" + text);
+  // Data til beregnerens adresse (base64 af UTF-8, uden varelinks for at holde adressen kort)
+  const short = JSON.stringify({ ...result, items: result.items.map(({ url, ...i }) => i) });
+  const bytes = new TextEncoder().encode(short);
+  let bin = ""; for (let i = 0; i < bytes.length; i += 4096) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 4096));
+  const openUrl = CALC_URL + "#data=" + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+  // ---- Boks på siden ----
+  document.getElementById("haulberegner-panel")?.remove();
+  const host = document.createElement("div");
+  host.id = "haulberegner-panel";
+  host.style.cssText = "position:fixed;top:16px;right:16px;z-index:2147483647;";
+  const root = host.attachShadow({ mode: "open" });
+  const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const goods = result.items.reduce((a, i) => a + i.price * i.qty, 0);
+  const grams = result.items.reduce((a, i) => a + i.w, 0);
+  const n2 = v => v.toLocaleString("da-DK", { maximumFractionDigits: 2 });
+  root.innerHTML = `
+  <style>
+    :host{all:initial}
+    .box{width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:#fff;color:#16231f;
+      border:2px solid #0f6b5c;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.25);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+    .head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;background:#0f6b5c;color:#fff}
+    .head b{font-size:16px}
+    .x{background:none;border:0;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
+    .sum{padding:10px 14px;background:#dcefe9;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 16px}
+    .sum span b{font-variant-numeric:tabular-nums}
+    .list{overflow:auto;flex:1;min-height:80px}
+    table{border-collapse:collapse;width:100%;font-size:13px}
+    th,td{padding:6px 10px;border-bottom:1px solid #e3e9e7;text-align:right;font-variant-numeric:tabular-nums;vertical-align:top}
+    th{position:sticky;top:0;background:#f7f9f8;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5b6b66;font-weight:500}
+    th:first-child,td:first-child{text-align:left}
+    td:first-child{max-width:300px;word-break:break-word}
+    .foot{padding:12px 14px;display:grid;gap:8px;border-top:1px solid #e3e9e7}
+    .btns{display:flex;flex-wrap:wrap;gap:8px}
+    button.go,a.go{background:#0f6b5c;color:#fff;border:1px solid #0f6b5c;border-radius:6px;padding:9px 14px;font:600 14px system-ui,sans-serif;cursor:pointer;text-decoration:none}
+    button.alt{background:#fff;color:#16231f;border:1px solid #cfd8d5;border-radius:6px;padding:9px 14px;font:14px system-ui,sans-serif;cursor:pointer}
+    .msg{font-size:13px;color:#5b6b66;margin:0}
+    textarea{width:100%;box-sizing:border-box;height:70px;font:12px ui-monospace,monospace;display:none}
+  </style>
+  <div class="box" role="dialog" aria-label="Haulberegner">
+    <div class="head"><b>Haulberegner · ${result.items.length} varer</b><button class="x" title="Luk">×</button></div>
+    <div class="list"><table>
+      <thead><tr><th>Vare</th><th>Pris ¥</th><th>Antal</th><th>Vægt g</th></tr></thead>
+      <tbody>${result.items.map(i => `<tr><td>${esc(i.name)}</td><td>${n2(i.price)}</td><td>${i.qty}</td><td>${i.w || "–"}</td></tr>`).join("") ||
+        `<tr><td colspan="4">Ingen varer fundet.</td></tr>`}</tbody>
+    </table></div>
+    <div class="sum">
+      <span>${source === "waybill" ? "Pakke " + esc(waybill) : "Ikke sendt endnu"}</span>
+      <span>Varer <b>¥${n2(goods)}</b></span>
+      <span>Vægt <b>${n2(grams / 1000)} kg</b></span>
+      <span>Fragt i Kina <b>¥${n2(domestic)}</b></span>
+      ${intl ? `<span>Fragt til DK <b>¥${n2(intl)}</b></span>` : ""}
+      ${recharges[0] ? `<span>Seneste kurs <b>¥${recharges[0].cnyPerUsd}/$</b></span>` : ""}
+      ${tariffs ? `<span>${tariffs.lines.length} fragtlinjer</span>` : ""}
+    </div>
+    <div class="foot">
+      <div class="btns">
+        <a class="go" href="${openUrl}" target="_blank" rel="noopener">Åbn i Haulberegner</a>
+        <button class="alt" id="cp">Kopiér data</button>
+      </div>
+      <p class="msg" id="m">"Åbn i Haulberegner" indlæser alt automatisk. "Kopiér data" bruges, hvis du har beregneren åben et andet sted.</p>
+      <textarea id="ta" readonly></textarea>
+    </div>
+  </div>`;
+  document.body.appendChild(host);
+  root.querySelector(".x").onclick = () => host.remove();
+  root.getElementById("cp").onclick = async () => {
+    const m = root.getElementById("m");
+    try { await navigator.clipboard.writeText(text); m.textContent = "Kopieret. Indsæt det under \"Hent fra Basetao\" i beregneren og tryk Indlæs."; }
+    catch (e) { const ta = root.getElementById("ta"); ta.style.display = "block"; ta.value = text; ta.select(); m.textContent = "Kunne ikke kopiere automatisk. Teksten er markeret nedenfor, tryk Ctrl+C."; }
+  };
+
+  console.log(`%cHaulberegner: ${result.items.length} varer hentet. Se boksen øverst til højre på siden.`, "font-weight:bold;color:#0f6b5c");
   return result;
 })().catch(e => console.error("Basetao-fetcher fejlede: " + e.message));

@@ -12,6 +12,10 @@ Beregneren estimerer fragten til Danmark ud fra varernes samlede vægt og Baseta
 - Taksterne er hentet fra Basetaos fragtberegner 28/10-2026. Fetcher-scriptet henter de aktuelle takster, hver gang du bruger det.
 - Estimatet bruger den faktiske vægt. Store, lette pakker kan blive dyrere, hvis rumfangsvægten er højere.
 
+## Sweet spot
+
+Fragten har et fast startgebyr pr. pakke, så små pakker er dyre pr. kg. Under fragten viser beregneren, om din pakke er i sweet spot for den valgte linje. Det er fra den vægt, hvor prisen pr. kg er højst 20 % over det laveste, linjen kan give. For de toldfri DHL/DPD-linjer er det ca. 6–10 kg. Beregneren viser også, hvor mange gram der er til næste prisspring.
+
 ## Indbetalinger og tab
 
 Under **Indbetalinger** fører du en log over dine overførsler:
@@ -39,7 +43,7 @@ Loggen starter med 12 rigtige indbetalinger fra maj 2024 til juli 2026: PayPal t
 1. Log ind på www.basetao.com.
 2. Tryk F12 og vælg fanen **Console**.
 3. Indsæt hele indholdet af `basetao-fetcher.js` og tryk Enter. Første gang skal du måske skrive `allow pasting` i Chrome.
-4. Resultatet kopieres til udklipsholderen. Indsæt det i Haulberegneren under **Hent fra Basetao** og tryk **Indlæs**.
+4. En boks med dine varer vises øverst til højre på Basetao-siden. Tryk **Åbn i Haulberegner**, så åbnes beregneren med alt indlæst. Du kan også trykke **Kopiér data** og indsætte det under **Hent fra Basetao**.
 
 Scriptet henter:
 
