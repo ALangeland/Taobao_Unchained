@@ -34,8 +34,11 @@
   async function getJSON(url) {
     const r = await fetch(url, H);
     const t = await r.text();
-    try { return JSON.parse(t); }
-    catch (e) { throw new Error("Basetao svarede ikke med data. Er du logget ind? (" + url + ")"); }
+    let j;
+    try { j = JSON.parse(t); }
+    catch (e) { throw new Error("Basetao svarede ikke med data. Er du logget ind?"); }
+    if (j && j.value === 0 && !j.rows) throw new Error("Du er ikke logget ind på Basetao (" + (j.msg || "ingen adgang") + "). Log ind og kør scriptet igen.");
+    return j;
   }
 
   async function allOrders(state) {
@@ -65,7 +68,7 @@
   const open = ["pending", "ordered", "arrived", "splitting", "changing", "transferring"];
   let orders = [];
   for (const s of open) {
-    try { orders.push(...(await allOrders(s))); } catch (e) { console.warn(s + ": " + e.message); }
+    try { orders.push(...(await allOrders(s))); } catch (e) { if (/ikke logget ind/.test(e.message)) throw e; console.warn(s + ": " + e.message); }
   }
   const seen = new Set();
   orders = orders.filter(o => String(o.state) !== "5" && !seen.has(o.oid) && seen.add(o.oid));
@@ -212,4 +215,15 @@
 
   console.log(`%cHaulberegner: ${result.items.length} varer hentet. Se boksen øverst til højre på siden.`, "font-weight:bold;color:#0f6b5c");
   return result;
-})().catch(e => console.error("Basetao-fetcher fejlede: " + e.message));
+})().catch(e => {
+  console.error("Basetao-fetcher fejlede: " + e.message);
+  document.getElementById("haulberegner-panel")?.remove();
+  const d = document.createElement("div");
+  d.id = "haulberegner-panel";
+  d.style.cssText = "position:fixed;top:16px;right:16px;z-index:2147483647;max-width:420px;padding:14px 16px;background:#fff;color:#16231f;" +
+    "border:2px solid #b5462c;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.25);font:14px/1.45 system-ui,sans-serif";
+  d.innerHTML = '<b style="color:#b5462c">Haulberegner: kunne ikke hente data</b><p style="margin:6px 0 10px"></p><button style="padding:6px 12px;cursor:pointer">Luk</button>';
+  d.querySelector("p").textContent = e.message;
+  d.querySelector("button").onclick = () => d.remove();
+  document.body.appendChild(d);
+});
