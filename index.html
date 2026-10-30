@@ -334,7 +334,12 @@ function renderSweet(krPerCny){
   const box = $("sweet"), g = totalWeight();
   const priced = S.tariffs.lines.map(L => ({ L, p: linePrice(L, g) })).filter(x => x.p !== null);
   let L = S.intlMode === "auto" ? S.tariffs.lines.find(x => x.n === S.line) : null;
-  if (!L || linePrice(L, g) === null) L = priced.length ? priced.reduce((a,b) => a.p <= b.p ? a : b).L : S.tariffs.lines.find(x => x.max >= 15000) || S.tariffs.lines[0];
+  if (!L || linePrice(L, g) === null) {
+    // Sammenlign med den billigste toldfri linje, ikke langsomme postlinjer
+    const free = priced.filter(x => /toldfri|tax free/i.test(x.L.n));
+    const pool = free.length ? free : priced;
+    L = pool.length ? pool.reduce((a,b) => a.p <= b.p ? a : b).L : S.tariffs.lines.find(x => x.max >= 15000) || S.tariffs.lines[0];
+  }
   if (!L || !g) { box.hidden = true; return }
   const perKg = w => linePrice(L, w) * krPerCny / (w/1000);
   const best = perKg(L.max);
@@ -351,7 +356,7 @@ function renderSweet(krPerCny){
     const extra = from - g, add = (linePrice(L, from) - nowPrice) * krPerCny;
     cls = "low"; head = `Under sweet spot: ${fmt(perKg(g),0)} kr pr. kg`;
     body = `Fra ca. ${kg(from)} falder fragten til ${fmt(perKg(from),0)} kr pr. kg. Du kan lægge ${kg(extra)} mere i pakken for ca. ${fmt(add,0)} kr ekstra i fragt` +
-      (g < 2000 ? `. Sendt alene koster fragten ${fmt(nowPrice*krPerCny,0)} kr, så vent hellere og saml flere varer.` : ".");
+      (g < 2000 ? `. Startgebyret gør små pakker dyre, så vent hellere og saml flere varer.` : ".");
   } else {
     cls = "good"; head = `I sweet spot: ${fmt(perKg(g),0)} kr pr. kg`;
     body = g <= to
